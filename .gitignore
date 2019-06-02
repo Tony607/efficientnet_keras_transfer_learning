@@ -103,3 +103,12 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+.vscode/
+
+models/
+data/
+examples/*.png
+examples/*.svg
+*.h5
+*.pb
