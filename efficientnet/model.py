@@ -30,10 +30,10 @@ import six
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
-import keras.backend as K
-import keras.models as KM
-import keras.layers as KL
-from keras.utils import get_file
+import tensorflow.keras.backend as K
+import tensorflow.keras.models as KM
+import tensorflow.keras.layers as KL
+from tensorflow.keras.utils import get_file
 
 from .layers import Swish, DropConnect
 from .params import get_model_params, IMAGENET_WEIGHTS
@@ -356,7 +356,7 @@ def _get_model_by_name(model_name, input_shape=None, include_top=True, weights=N
         input_shape = (default_input_shape, default_input_shape, 3)
 
     model = EfficientNet(input_shape, block_agrs_list, global_params, include_top=include_top)
-    model.name = model_name
+    model._name = model_name
 
     if weights:
         if not include_top:
