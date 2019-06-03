@@ -34,57 +34,57 @@ import tensorflow.keras.backend as K
 import tensorflow.keras.models as KM
 import tensorflow.keras.layers as KL
 from tensorflow.keras.utils import get_file
-
+from tensorflow.keras.initializers import Initializer
 from .layers import Swish, DropConnect
 from .params import get_model_params, IMAGENET_WEIGHTS
 
 __all__ = ['EfficientNet', 'EfficientNetB0', 'EfficientNetB1', 'EfficientNetB2', 'EfficientNetB3',
            'EfficientNetB4', 'EfficientNetB5', 'EfficientNetB6', 'EfficientNetB7']
 
+class ConvKernalInitializer(Initializer):
+    def __call__(self, shape, dtype=K.floatx(), partition_info=None):
+        """Initialization for convolutional kernels.
 
-def conv_kernel_initializer(shape, dtype=K.floatx(), partition_info=None):
-    """Initialization for convolutional kernels.
+        The main difference with tf.variance_scaling_initializer is that
+        tf.variance_scaling_initializer uses a truncated normal with an uncorrected
+        standard deviation, whereas here we use a normal distribution. Similarly,
+        tf.contrib.layers.variance_scaling_initializer uses a truncated normal with
+        a corrected standard deviation.
 
-    The main difference with tf.variance_scaling_initializer is that
-    tf.variance_scaling_initializer uses a truncated normal with an uncorrected
-    standard deviation, whereas here we use a normal distribution. Similarly,
-    tf.contrib.layers.variance_scaling_initializer uses a truncated normal with
-    a corrected standard deviation.
+        Args:
+        shape: shape of variable
+        dtype: dtype of variable
+        partition_info: unused
 
-    Args:
-      shape: shape of variable
-      dtype: dtype of variable
-      partition_info: unused
+        Returns:
+        an initialization for the variable
+        """
+        del partition_info
+        kernel_height, kernel_width, _, out_filters = shape
+        fan_out = int(kernel_height * kernel_width * out_filters)
+        return tf.random_normal(
+            shape, mean=0.0, stddev=np.sqrt(2.0 / fan_out), dtype=dtype)
 
-    Returns:
-      an initialization for the variable
-    """
-    del partition_info
-    kernel_height, kernel_width, _, out_filters = shape
-    fan_out = int(kernel_height * kernel_width * out_filters)
-    return tf.random_normal(
-        shape, mean=0.0, stddev=np.sqrt(2.0 / fan_out), dtype=dtype)
+class DenseKernalInitializer(Initializer):
+    def __call__(self, shape, dtype=K.floatx(), partition_info=None):
+        """Initialization for dense kernels.
 
+        This initialization is equal to
+        tf.variance_scaling_initializer(scale=1.0/3.0, mode='fan_out',
+                                        distribution='uniform').
+        It is written out explicitly here for clarity.
 
-def dense_kernel_initializer(shape, dtype=K.floatx(), partition_info=None):
-    """Initialization for dense kernels.
+        Args:
+        shape: shape of variable
+        dtype: dtype of variable
+        partition_info: unused
 
-    This initialization is equal to
-      tf.variance_scaling_initializer(scale=1.0/3.0, mode='fan_out',
-                                      distribution='uniform').
-    It is written out explicitly here for clarity.
-
-    Args:
-      shape: shape of variable
-      dtype: dtype of variable
-      partition_info: unused
-
-    Returns:
-      an initialization for the variable
-    """
-    del partition_info
-    init_range = 1.0 / np.sqrt(shape[1])
-    return tf.random_uniform(shape, -init_range, init_range, dtype=dtype)
+        Returns:
+        an initialization for the variable
+        """
+        del partition_info
+        init_range = 1.0 / np.sqrt(shape[1])
+        return tf.random_uniform(shape, -init_range, init_range, dtype=dtype)
 
 
 def round_filters(filters, global_params):
@@ -132,7 +132,7 @@ def SEBlock(block_args, global_params):
             num_reduced_filters,
             kernel_size=[1, 1],
             strides=[1, 1],
-            kernel_initializer=conv_kernel_initializer,
+            kernel_initializer=ConvKernalInitializer(),
             padding='same',
             use_bias=True
         )(x)
@@ -142,7 +142,7 @@ def SEBlock(block_args, global_params):
             filters,
             kernel_size=[1, 1],
             strides=[1, 1],
-            kernel_initializer=conv_kernel_initializer,
+            kernel_initializer=ConvKernalInitializer(),
             padding='same',
             use_bias=True
         )(x)
@@ -177,7 +177,7 @@ def MBConvBlock(block_args, global_params):
                 filters,
                 kernel_size=[1, 1],
                 strides=[1, 1],
-                kernel_initializer=conv_kernel_initializer,
+                kernel_initializer=ConvKernalInitializer(),
                 padding='same',
                 use_bias=False
             )(inputs)
@@ -193,7 +193,7 @@ def MBConvBlock(block_args, global_params):
         x = KL.DepthwiseConv2D(
             [kernel_size, kernel_size],
             strides=block_args.strides,
-            depthwise_initializer=conv_kernel_initializer,
+            depthwise_initializer=ConvKernalInitializer(),
             padding='same',
             use_bias=False
         )(x)
@@ -213,7 +213,7 @@ def MBConvBlock(block_args, global_params):
             block_args.output_filters,
             kernel_size=[1, 1],
             strides=[1, 1],
-            kernel_initializer=conv_kernel_initializer,
+            kernel_initializer=ConvKernalInitializer(),
             padding='same',
             use_bias=False
         )(x)
@@ -251,7 +251,7 @@ def EfficientNet(input_shape, block_args_list, global_params, include_top=True):
         filters=round_filters(32, global_params),
         kernel_size=[3, 3],
         strides=[2, 2],
-        kernel_initializer=conv_kernel_initializer,
+        kernel_initializer=ConvKernalInitializer(),
         padding='same',
         use_bias=False
     )(x)
@@ -286,7 +286,7 @@ def EfficientNet(input_shape, block_args_list, global_params, include_top=True):
         filters=round_filters(1280, global_params),
         kernel_size=[1, 1],
         strides=[1, 1],
-        kernel_initializer=conv_kernel_initializer,
+        kernel_initializer=ConvKernalInitializer(),
         padding='same',
         use_bias=False
     )(x)
