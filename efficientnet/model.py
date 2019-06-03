@@ -301,7 +301,7 @@ def EfficientNet(input_shape, block_args_list, global_params, include_top=True):
         x = KL.GlobalAveragePooling2D(data_format=global_params.data_format)(x)
         if global_params.dropout_rate > 0:
             x = KL.Dropout(global_params.dropout_rate)(x)
-        x = KL.Dense(global_params.num_classes, kernel_initializer=dense_kernel_initializer)(x)
+        x = KL.Dense(global_params.num_classes, kernel_initializer=DenseKernalInitializer())(x)
         x = KL.Activation('softmax')(x)
 
     outputs = x
