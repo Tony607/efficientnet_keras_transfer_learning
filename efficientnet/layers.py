@@ -5,15 +5,16 @@ from tensorflow.keras.utils import get_custom_objects
 
 
 class Swish(KL.Layer):
-
-    def call(self, inputs):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    def call(self, inputs, **kwargs):
         return tf.nn.swish(inputs)
 
 
 class DropConnect(KL.Layer):
 
-    def __init__(self, drop_connect_rate=0.):
-        super().__init__()
+    def __init__(self, drop_connect_rate=0., **kwargs):
+        super().__init__(**kwargs)
         self.drop_connect_rate = drop_connect_rate
 
     def call(self, inputs, training=None):
