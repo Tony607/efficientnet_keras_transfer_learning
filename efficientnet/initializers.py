@@ -27,7 +27,7 @@ class EfficientConv2DKernelInitializer(Initializer):
     def __call__(self, shape, dtype=K.floatx(), **kwargs):
         kernel_height, kernel_width, _, out_filters = shape
         fan_out = int(kernel_height * kernel_width * out_filters)
-        return tf.random_normal(
+        return tf.random.normal(
             shape, mean=0.0, stddev=np.sqrt(2.0 / fan_out), dtype=dtype)
 
 
@@ -63,7 +63,7 @@ class EfficientDenseKernelInitializer(Initializer):
           an initialization for the variable
         """
         init_range = 1.0 / np.sqrt(shape[1])
-        return tf.random_uniform(shape, -init_range, init_range, dtype=dtype)
+        return tf.random.uniform(shape, -init_range, init_range, dtype=dtype)
 
 
 conv_kernel_initializer = EfficientConv2DKernelInitializer()
